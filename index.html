@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>全能计算器（网页版）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+    body {
+        margin: 0;
+        font-family: "Microsoft YaHei", sans-serif;
+        background: #f2f4f7;
+        display: flex;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .container {
+        display: flex;
+        gap: 20px;
+        max-width: 1200px;
+        width: 100%;
+    }
+
+    .panel {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    h2 {
+        margin-top: 0;
+        font-size: 20px;
+        font-weight: bold;
+        color: #003399;
+    }
+
+    textarea {
+        width: 100%;
+        height: 200px;
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        resize: vertical;
+    }
+
+    .btn-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    button {
+        padding: 10px;
+        border: none;
+        border-radius: 6px;
+        background: #0052cc;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #003d99;
+        transform: translateY(-2px);
+    }
+
+    .result-box {
+        margin-top: 15px;
+        padding: 12px;
+        background: #e8f5e9;
+        border-left: 4px solid #4caf50;
+        font-size: 16px;
+        font-weight: bold;
+        color: #2e7d32;
+        border-radius: 6px;
+    }
+
+    /* 表达式计算器 */
+    #output {
+        height: 260px;
+        overflow-y: auto;
+        background: #fafafa;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        white-space: pre-wrap;
+        font-size: 14px;
+    }
+
+    #expr-input {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 15px;
+        border-radius: 6px;
+        border: 1px solid #aaa;
+    }
+
+    .tag-info { color: #003399; }
+    .tag-help { color: darkgreen; }
+    .tag-error { color: red; }
+    .tag-result { color: #0000cc; font-weight: bold; }
+    .tag-prompt { color: #555; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- 左侧：批量统计 -->
+    <div class="panel">
+        <h2>批量数据统计</h2>
+        <p>请将数据粘贴到下方（支持 Excel 复制）：</p>
+
+        <textarea id="data-input"></textarea>
+
+        <div class="btn-grid">
+            <button onclick="calcSum()">求和</button>
+            <button onclick="calcMean()">求均值</button>
+            <button onclick="calcStd()">标准差</button>
+
+            <button onclick="calcCV()">变异系数(CV)</button>
+            <button onclick="calcMin()">最小值</button>
+            <button onclick="calcQ1()">第1/4百分位点</button>
+
+            <button onclick="calcMedian()">中值</button>
+            <button onclick="calcQ3()">第3/4百分位点</button>
+            <button onclick="calcMax()">最大值</button>
+        </div>
+
+        <div id="stat-result" class="result-box">结果显示区</div>
+    </div>
+
+    <!-- 右侧：表达式计算器 -->
+    <div class="panel">
+        <h2>表达式计算器</h2>
+
+        <div id="output"></div>
+
+        <input id="expr-input" placeholder="输入表达式并回车..." onkeydown="if(event.key==='Enter') processExpression()">
+
+    </div>
+
+</div>
+
+<script>
+/* ------------------ 工具函数 ------------------ */
+function parseNumbers() {
+    let text = document.getElementById("data-input").value;
+    return text.split(/[\s,]+/).map(Number).filter(x => !isNaN(x));
+}
+
+function formatNumber(num) {
+    if (Number.isInteger(num)) return num.toString();
+    return Number(num.toFixed(8)).toString();
+}
+
+function quantile(arr, q) {
+    arr = [...arr].sort((a,b)=>a-b);
+    let n = arr.length;
+    if (n === 1) return arr[0];
+    let p = q * (n - 1);
+    let k = Math.floor(p);
+    let d = p - k;
+    return d === 0 ? arr[k] : arr[k] + d * (arr[k+1] - arr[k]);
+}
+
+function showStatResult(text) {
+    document.getElementById("stat-result").innerText = text;
+    window.leftPanelResult = parseFloat(text.replace(/[^\d.-]/g, "")) || 0;
+}
+
+/* ------------------ 左侧统计功能 ------------------ */
+function calcSum() {
+    let nums = parseNumbers();
+    if (!nums.length) return alert("未找到有效数字");
+    showStatResult("和 (Sum): " + formatNumber(nums.reduce((a,b)=>a+b,0)));
+}
+
+function calcMean() {
+    let nums = parseNumbers();
+    if (!nums.length) return alert("未找到有效数字");
+    showStatResult("均值 (Mean): " + formatNumber(nums.reduce((a,b)=>a+b,0)/nums.length));
+}
+
+function calcStd() {
+    let nums = parseNumbers();
+    if (nums.length < 2) return alert("至少需要两个数字");
+    let mean = nums.reduce((a,b)=>a+b,0)/nums.length;
+    let variance = nums.reduce((s,x)=>s+(x-mean)**2,0)/(nums.length-1);
+    showStatResult("标准差 (样本): " + formatNumber(Math.sqrt(variance)));
+}
+
+function calcCV() {
+    let nums = parseNumbers();
+    if (nums.length < 2) return alert("至少需要两个数字");
+    let mean = nums.reduce((a,b)=>a+b,0)/nums.length;
+    if (mean === 0) return alert("均值为0，无法计算CV");
+    let variance = nums.reduce((s,x)=>s+(x-mean)**2,0)/(nums.length-1);
+    let cv = Math.sqrt(variance)/mean * 100;
+    showStatResult("变异系数 (CV): " + cv.toFixed(4) + "%");
+}
+
+function calcMin() {
+    let nums = parseNumbers();
+    if (!nums.length) return alert("未找到有效数字");
+    showStatResult("最小值 (Min): " + formatNumber(Math.min(...nums)));
+}
+
+function calcMax() {
+    let nums = parseNumbers();
+    if (!nums.length) return alert("未找到有效数字");
+    showStatResult("最大值 (Max): " + formatNumber(Math.max(...nums)));
+}
+
+function calcQ1() {
+    let nums = parseNumbers();
+    if (!nums.length) return alert("未找到有效数字");
+    showStatResult("Q1: " + formatNumber(quantile(nums,0.25)));
+}
+
+function calcMedian() {
+    let nums = parseNumbers();
+    if (!nums.length) return alert("未找到有效数字");
+    showStatResult("中值 (Median): " + formatNumber(quantile(nums,0.5)));
+}
+
+function calcQ3() {
+    let nums = parseNumbers();
+    if (!nums.length) return alert("未找到有效数字");
+    showStatResult("Q3: " + formatNumber(quantile(nums,0.75)));
+}
+
+/* ------------------ 表达式计算器 ------------------ */
+let lastResult = 0;
+let leftPanelResult = 0;
+
+function appendOutput(text, cls="") {
+    let out = document.getElementById("output");
+    let span = `<div class="${cls}">${text}</div>`;
+    out.innerHTML += span;
+    out.scrollTop = out.scrollHeight;
+}
+
+function processExpression() {
+    let input = document.getElementById("expr-input");
+    let expr = input.value.trim();
+    input.value = "";
+    if (!expr) return;
+
+    appendOutput("> " + expr, "tag-prompt");
+
+    if (expr.toLowerCase() === "clear") {
+        document.getElementById("output").innerHTML = "";
+        appendOutput("欢迎使用表达式计算器！", "tag-info");
+        appendOutput("支持: + - * / % ^ () s(x) y x ±", "tag-help");
+        lastResult = 0;
+        return;
+    }
+
+    try {
+        let e = expr.replace(/y/g, lastResult)
+                    .replace(/x/g, leftPanelResult)
+                    .replace(/(\d+\.?\d*)%/g, "($1/100)")
+                    .replace(/\^/g, "**")
+                    .replace(/s\(/g, "Math.sqrt(");
+
+        if (expr.includes("±")) {
+            let [base, delta] = expr.split("±").map(s => s.trim());
+            let b = eval(base.replace(/\^/g,"**").replace(/s\(/g,"Math.sqrt("));
+            let d = eval(delta.replace(/\^/g,"**").replace(/s\(/g,"Math.sqrt("));
+            appendOutput("= " + formatNumber(b-d) + " ~ " + formatNumber(b+d), "tag-result");
+            return;
+        }
+
+        let result = eval(e);
+        lastResult = result;
+        appendOutput("= " + formatNumber(result), "tag-result");
+
+    } catch (err) {
+        appendOutput("错误: " + err, "tag-error");
+    }
+}
+</script>
+
+</body>
+</html>
