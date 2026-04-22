@@ -117,7 +117,7 @@
 
 <div class="container">
 
-    <!-- 左侧：批量统计 -->
+    <!-- 左侧：批量数据统计 -->
     <div class="panel">
         <h2>批量数据统计</h2>
         <p>请将数据粘贴到下方（支持 Excel 复制）：</p>
@@ -252,6 +252,23 @@ function appendOutput(text, cls="") {
     out.scrollTop = out.scrollHeight;
 }
 
+/* --- 页面加载时自动显示欢迎提示 --- */
+window.onload = function () {
+    appendOutput("欢迎使用表达式计算器！", "tag-info");
+    appendOutput(
+        "支持运算:\n" +
+        "  + - * / ± : 加减乘除，加减\n" +
+        "  % : 百分比 (例如: 50%)\n" +
+        "  ^ : 幂 (例如: 2^3)\n" +
+        "  () : 括号\n" +
+        "  s(x) : 开根号 (例如: s(16))\n" +
+        "  y : 上次结果\n" +
+        "  x : 左侧面板最后计算结果\n" +
+        "  输入 clear 清空\n",
+        "tag-help"
+    );
+};
+
 function processExpression() {
     let input = document.getElementById("expr-input");
     let expr = input.value.trim();
@@ -262,8 +279,21 @@ function processExpression() {
 
     if (expr.toLowerCase() === "clear") {
         document.getElementById("output").innerHTML = "";
+
         appendOutput("欢迎使用表达式计算器！", "tag-info");
-        appendOutput("支持: + - * / % ^ () s(x) y x ±", "tag-help");
+        appendOutput(
+            "支持运算:\n" +
+            "  + - * / ± : 加减乘除，加减\n" +
+            "  % : 百分比 (例如: 50%)\n" +
+            "  ^ : 幂 (例如: 2^3)\n" +
+            "  () : 括号\n" +
+            "  s(x) : 开根号 (例如: s(16))\n" +
+            "  y : 上次结果\n" +
+            "  x : 左侧面板最后计算结果\n" +
+            "  输入 clear 清空\n",
+            "tag-help"
+        );
+
         lastResult = 0;
         return;
     }
