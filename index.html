@@ -42,7 +42,7 @@
     /* 左侧数据粘贴框高度 ×2 */
     textarea {
         width: 100%;
-        height: 400px; /* 原来约 200px，现在 ×2 */
+        height: 400px;
         padding: 10px;
         font-size: 14px;
         border-radius: 8px;
@@ -73,6 +73,7 @@
         transform: translateY(-2px);
     }
 
+    /* 左侧结果显示区固定高度，便于右侧对齐 */
     .result-box {
         margin-top: 15px;
         padding: 12px;
@@ -82,11 +83,14 @@
         font-weight: bold;
         color: #2e7d32;
         border-radius: 6px;
+        height: 60px; /* 固定高度，便于右侧中线对齐 */
+        display: flex;
+        align-items: center;
     }
 
-    /* 右侧输出区高度同步加倍 */
+    /* 右侧输出区高度 ×2 */
     #output {
-        height: 520px; /* 原来约 260px，现在 ×2 */
+        height: 520px;
         overflow-y: auto;
         background: #fafafa;
         padding: 10px;
@@ -96,15 +100,14 @@
         font-size: 14px;
     }
 
-    /* 输入表达式框与左侧结果显示区底部对齐 */
+    /* 输入框中线对齐左侧结果显示区中线 */
     #expr-input {
         width: 100%;
         padding: 10px;
-        margin-top: 10px;
+        margin-top: 38px; /* 关键：通过此值实现中线对齐 */
         font-size: 15px;
         border-radius: 6px;
         border: 1px solid #aaa;
-        margin-bottom: 0; /* 保证底部对齐 */
     }
 
     .tag-info { color: #003399; }
